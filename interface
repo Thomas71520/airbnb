@@ -1,0 +1,384 @@
+# In[1]:
+
+
+import tkinter as tk
+from PIL import Image, ImageTk
+from tkinter import messagebox
+from tkcalendar import Calendar
+from pandastable import Table, TableModel
+import modules_fonctions_criteres as mfc
+import webbrowser
+
+
+# In[2]:
+
+
+#Fenêtre du dataframe contenant les résultats
+
+def dataframechoice():
+                
+    calendar = mfc.import_description('calendar.csv')[0]
+    listings = mfc.import_description('listings.csv')[0]
+    calendar = calendar.fillna('')
+    listings = listings.fillna('')
+
+    class TestApp(tk.Frame): #classe qui permet d'afficher un dataframe interactif, grace a la librairie pandastable
+        def __init__(root,parent = app, master = app):
+                root.parent = parent
+                tk.Frame.__init__(root)
+                root.main = root.master
+                root.main.geometry('1080x720')
+                root.main.title('Table root')
+                
+                root.button1 = tk.Button(app, text="Voir les résultats", activebackground="red", activeforeground="white",
+                                         bg = 'Lightcoral', command=root.display_df_in_new_window,
+                                         font = 'Helvetica 10')
+                root.button1.place(x=870, y=470, height = 44, width = 200)
+
+
+        def display_df_in_new_window(root):
+            frame = tk.Toplevel(root.parent) #this is the new window
+            frame.geometry('1080x720')
+            f = tk.Frame(root.main)
+            f.grid( row = 0, column = 1, sticky = 'SE')
+            
+            newdf0 = mfc.choixlocation(r.get(),listings)
+            newdf1 = mfc.choixquartier(v,newdf0)
+            newdf2 = mfc.choixannulation(p.get(),newdf1)
+            newdf3 = mfc.choixmieuxnotés(n.get(),newdf2)
+            newdf4 = mfc.isavail(c,d,newdf3,calendar)
+            newdf5 = mfc.choixnblits(j.get(),newdf4)
+            newdf6 = mfc.install(r_1.get(),newdf5)
+            newdf7 = mfc.install(r_2.get(),newdf6)
+            newdf8 = mfc.install(r_3.get(),newdf7)
+            newdf9 = mfc.install(r_4.get(),newdf8)
+            newdf10 = mfc.install(r_5.get(),newdf9)
+            newdf11 = mfc.install(r_6.get(),newdf10)            
+            newdf12 = mfc.prix(minp,maxp,newdf11)
+            
+            df = newdf12[["listing_url","name","price","description","room_type","neighbourhood","bedrooms","beds","cancellation_policy","review_scores_rating","host_name"]]
+            root.table = pt = Table(frame, dataframe=df,showtoolbar=True, showstatusbar=True)
+            pt.cellbackgr = 'LavenderBlush'
+            pt.show()
+#Partie pour aller sur le site correspondant à l'annonce sélectionnée------------------------------------------------------------------------
+            url=tk.StringVar()
+            def recupere_url():
+                """
+                fonction pour aller sur le site correspondant à l'url choisi
+                """
+                global url
+                url=en_url.get()
+                webbrowser.open_new(url)
+            en_url = tk.Entry(frame, textvariable=url, width=45,bd=9)
+            en_url.config(fg='DarkRed',font = 'Helvetica 10')
+            bt_url = tk.Button(frame,height = 2, text="Aller vers l'annonce", activebackground="red",
+                               activeforeground="white", command=recupere_url,bg='LightCoral',
+                               font = 'Helvetica 10')
+            en_url.place(x=750,y=-10)
+            bt_url.place(x=630,y=-10)
+            return
+
+    app2 = TestApp()
+
+
+# In[3]:
+
+
+#Fenêtre du programme contenant l'interface
+
+def create():
+    global app
+    app=tk.Toplevel(acc)
+    app.geometry("1080x720")
+    app.minsize(760,1080)
+    app.configure(bg='Snow')
+    app.title("Réservation du logement Airbnb de vos rêves")
+
+
+#Création des variables associées aux widgets et initialisation de leurs valeurs---------------------------------------------
+    global r
+    global r_1
+    global r_2
+    global r_3
+    global r_3
+    global r_4
+    global r_5
+    global r_6
+    global p
+    global n
+    global j
+    r_1 = tk.StringVar()
+    r_1.set('0')
+    r_2 = tk.StringVar()
+    r_2.set('0')
+    r_3 = tk.StringVar()
+    r_3.set('0')
+    r_4 = tk.StringVar()
+    r_4.set('0')
+    r_5 = tk.StringVar()
+    r_5.set('0')
+    r_6 = tk.StringVar()
+    r_6.set('0')
+    r = tk.IntVar()
+    r.set(1)
+    p=tk.StringVar()
+    p.set("non")
+    n=tk.StringVar()
+    n.set("oui")
+    choix=[1,2,3,4,5,6,7,8,9,10]
+    j=tk.IntVar()#les variables considérés comme entiers
+    j.set(choix[0])#celui qui apparait en 1er quand la liste est cachée
+    c=tk.StringVar()
+    c.set("1/4/16")
+    d=tk.StringVar()
+    d.set("1/4/16")
+    v = tk.StringVar() 
+    v.set("Tous")
+    minp = tk.IntVar()
+    minp.set(0)
+    maxp = tk.IntVar()
+    maxp.set(1000)
+
+
+#Mise en place des widgets --------------------------------------------------------------------------------------------------
+    lab1=tk.Label(app, text =" Type de logement : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    radio = tk.Radiobutton(app, text = "Entire home/apt", value = 1, variable = r,bg='Snow')
+    radio2 = tk.Radiobutton(app, text = "Private room", value = 2,variable = r,bg='Snow')
+    radio3 = tk.Radiobutton(app, text = "Shared room", value = 3, variable = r,bg='Snow')
+    
+    lab2=tk.Label(app, text ="Politique d'annulation ?",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    radio4 = tk.Radiobutton(app, text = "Facile",value ="oui", variable = p,bg='Snow')
+    radio5 = tk.Radiobutton(app, text = "Normale",value ="non", variable = p,bg='Snow')
+    
+    lab3=tk.Label(app, text ="Les mieux notés ? ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    radio6 = tk.Radiobutton(app, text = "Oui",value ="oui", variable = n,bg='Snow')
+    radio7 = tk.Radiobutton(app, text = "Non",value ="non", variable = n,bg='Snow')
+    
+#Liste déroulante pour le nombre de lits -----------------------------------------
+    lab4 = tk.Label(app,text = "Nombre de lits souhaités : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    nblit = tk.OptionMenu(app, j, *choix)#pour le lancer
+    def rec():
+        global j
+        j=nblit.get()
+    nblit.config(bg='Snow')
+    b6= tk.Button(app, text="Valider", activebackground="red", activeforeground="white", command=rec,bg='LightCoral',
+                  font = 'Helvetica 10')
+    
+    lab5 = tk.Label(app,text = "Wifi ?",bg='Snow',fg ='Salmon', font='Helvetica 10 bold')
+    radio8=tk.Radiobutton(app,text = "Oui",variable = r_1, value = "wireless internet",bg='Snow')
+    radio9=tk.Radiobutton(app,text = "Indifférent",variable = r_1, value = "0",bg='Snow')
+    lab6 = tk.Label(app,text = "Télévision ?",bg='Snow',fg ='Salmon', font='Helvetica 10 bold')
+    radio10=tk.Radiobutton(app,text = "Oui",variable = r_2, value = "tv",bg='Snow')
+    radio11=tk.Radiobutton(app,text = "Indifférent",variable = r_2, value = "0",bg='Snow')
+    lab7 = tk.Label(app,text = "Parking gratuit ?",bg='Snow',fg ='Salmon', font='Helvetica 10 bold')
+    radio12=tk.Radiobutton(app,text = "Oui",variable = r_3, value = "free parking on premises",bg='Snow')
+    radio13=tk.Radiobutton(app,text = "Indifférent",variable = r_3, value = "0",bg='Snow')
+    lab8 = tk.Label(app,text = "Logement familial ?",bg='Snow',fg ='Salmon', font='Helvetica 10 bold')
+    radio14=tk.Radiobutton(app,text = "Oui",variable = r_4, value = "family/kid friendly",bg='Snow')
+    radio15=tk.Radiobutton(app,text = "Indifférent",variable = r_4, value = "0",bg='Snow')
+    lab9 = tk.Label(app,text = "Air conditionné ?",bg='Snow',fg ='Salmon', font='Helvetica 10 bold')
+    radio16=tk.Radiobutton(app,text = "Oui",variable = r_5, value = "air conditioning",bg='Snow')
+    radio17=tk.Radiobutton(app,text = "Indifférent",variable = r_5, value = "0",bg='Snow')
+    lab10 = tk.Label(app,text = "Cuisine ?",bg='Snow',fg ='Salmon', font='Helvetica 10 bold')
+    radio18=tk.Radiobutton(app,text = "Oui",variable = r_6, value = "kitchen",bg='Snow')
+    radio19=tk.Radiobutton(app,text = "Indifférent",variable = r_6, value = "0",bg='Snow')
+    
+#Fonction relative aux dates (calendriers) ----------------------------------------------------------------------------------------------------------------
+    cal = Calendar(app, selectmode = 'day', year = 2016, month = 1, day = 4,background='Darkred',
+                   disabledbackground="red", bordercolor="Darkred", 
+                   headersbackground="Darksalmon", normalbackground="Snow", 
+                   foreground='snow', 
+                   normalforeground='darkred', headersforeground='Darkred',
+                   selectforeground="snow",selectbackground="Salmon",
+                   weekendbackground = "FireBrick",weekendforeground="snow",
+                   othermonthforeground="snow",othermonthbackground ="indianred",
+                   othermonthweforeground ="Snow",othermonthwebackground="maroon")
+    def grad_date():
+        global c
+        c=cal.get_date()
+        date.config(text = "Du : " + cal.get_date())
+    bu = tk.Button(app, text = "Valider la date", activebackground="red", activeforeground="white",
+                   command = grad_date,bg='LightCoral',
+                   font = 'Helvetica 10')
+    date = tk.Label(app, text = "",bg='Snow')
+    
+    cal2 = Calendar(app, selectmode = 'day', year = 2016, month = 1, day = 4,background='Darkred',
+                   disabledbackground="red", bordercolor="Darkred", 
+                   headersbackground="Darksalmon", normalbackground="Snow", 
+                   foreground='snow', 
+                   normalforeground='darkred', headersforeground='Darkred',
+                   selectforeground="snow",selectbackground="Salmon",
+                   weekendbackground = "FireBrick",weekendforeground="snow",
+                   othermonthforeground="snow",othermonthbackground ="indianred",
+                   othermonthweforeground ="Snow",othermonthwebackground="maroon")
+    def grad_date2():
+        global d
+        d=cal2.get_date()
+        date2.config(text = "Au : " + cal2.get_date())
+    bu2 = tk.Button(app, text = "Valider la date", activebackground="red", activeforeground="white",
+                    command = grad_date2,bg='LightCoral',font = 'Helvetica 10')
+    date2 = tk.Label(app, text = "",bg='Snow')
+    
+    lab11 = tk.Label(app,text = "Quartier ?",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    entree = tk.Entry(app, textvariable=v, width=20)
+    entree.config(fg='DarkRed',font = 'Helvetica 10')
+    def recupere():
+        global v
+        v=entree.get()
+    b = tk.Button(app, text="Valider", activebackground="red", activeforeground="white", command=recupere,bg='LightCoral',
+                 font = 'Helvetica 10')
+
+    scale = tk.Scale(app, from_=0, to= 1000, width = 12, length =320,orient = "h", label='Prix minimum :',
+                     variable=minp,bg='Snow')
+    scale.config(fg='DarkRed',font = 'Helvetica 10')
+    def recup():
+        global minp
+        minp=scale.get()
+    b4= tk.Button(app, text="Valider", activebackground="red", activeforeground="white", command=recup,bg='LightCoral',
+                 font = 'Helvetica 10')
+
+    scale2 = tk.Scale(app, from_=0, to= 1000, width = 12, length =320,orient = "h", label='Prix maximum :',
+                      variable=maxp,bg='Snow')
+    scale2.config(fg='DarkRed',font = 'Helvetica 10')
+    def recup2():
+        global maxp
+        maxp=scale2.get()
+    b5= tk.Button(app, text="Valider", activebackground="red", activeforeground="white", command=recup2,bg='LightCoral',
+                 font = 'Helvetica 10')
+
+    lab12 = tk.Label(app,text = "Date de début de réservation : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    lab13 = tk.Label(app,text = "Date de fin de réservation : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    lab14 = tk.Label(app,text = "Liste des équipements : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    lab15 = tk.Label(app,text = "Enregistrer les modifications : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    lab16 = tk.Label(app,text = "Pour afficher les résultats : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+    lab17 = tk.Label(app,text = "Pour mettre fin à l'interface : ",bg='Snow',fg ='DarkRed', font='Helvetica 10 bold')
+#Indication sur les différents quartiers les plus représentés dans les données--------------------------------------------
+    def show_msg():
+        messagebox.showinfo("Quartier avec le plus de résultats", "'atlantic', 'ballard', 'belltown','capitol hill', 'central business district', 'columbia city', 'first hill','fremont', 'green lake', 'greenwood', 'lower queen anne', 'magnolia', 'minor','north beacon hill', 'phinney ridge', 'queen anne', 'ravenna','stevens', 'university district', 'wallingford'")
+        app.destroy()
+#Logo Airbnb ------------------------------------------------------------------------------------------------------------
+    im = Image.open('airbnb_logo.png')
+    resize_image = im.resize((300, 300))
+    img = ImageTk.PhotoImage(resize_image, master=app)
+    lab20 = tk.Label(image=img, master= app,bg='snow')
+    lab20.image = img
+#Autres boutons ---------------------------------------------------------------------------------------------------------
+    b1 = tk.Button(app, text="Cliquez ici", activebackground="red", activeforeground="white",
+                   command=dataframechoice,bg='LightCoral')
+    b2 = tk.Button(app, text = "Quitter", activebackground="red", activeforeground="white",
+                   command = acc.destroy,bg='LightCoral')
+    
+    b7 = tk.Button(app, text = " ? ", command=show_msg,bg='Snow')
+
+
+#Placement des widgets ------------------------------------------------------------------------------------------------------
+    #Widget location
+    lab1.place(x=10,y=320)
+    radio.place(x=10,y=350)
+    radio2.place(x=10,y=370)
+    radio3.place(x=10,y=390)
+
+    #Widget annulation
+    lab2.place(x=660,y=540)
+    radio4.place(x=660,y=570)
+    radio5.place(x=660,y=590)
+
+    #Widget notes
+    lab3.place(x=660,y=440)
+    radio6.place(x=660,y=470)
+    radio7.place(x=660,y=490)
+
+    #Widget lit
+    lab4.place(x=660,y=340)
+    nblit.place(x=675,y=370)
+    b6.place(x=725,y=372)
+
+    #Widgets équipements
+    lab14.place(x=660,y=70)
+
+    lab5.place(x=660,y=190)
+    radio8.place(x=660,y=220)
+    radio9.place(x=660,y=240)
+
+    lab6.place(x=660,y=100)
+    radio10.place(x=660,y=130)
+    radio11.place(x=660,y=150)
+
+    lab7.place(x=770,y=190)
+    radio12.place(x=770,y=220)
+    radio13.place(x=770,y=240)
+
+    lab8.place(x=880,y=190)
+    radio14.place(x=880,y=220)
+    radio15.place(x=880,y=240)
+
+    lab9.place(x=880,y=100)
+    radio16.place(x=880,y=130)
+    radio17.place(x=880,y=150)
+
+    lab10.place(x=770,y=100)
+    radio18.place(x=770,y=130)
+    radio19.place(x=770,y=150)
+
+    #Widgets dates
+    lab12.place(x=350,y=70)
+    cal.place(x=350,y=100)
+    bu.place(x=440,y=300)
+    date.place(x=400,y=330)
+
+    lab13.place(x=350,y=380)
+    cal2.place(x=350,y=410)
+    bu2.place(x=440,y=610)
+    date2.place(x=400,y=640)
+    
+    #Widget quartier
+    lab11.place(x=150,y=320)
+    entree.place(x=150,y=350)
+    b.place(x=150,y=370)
+    b7.place(x=225,y=320)
+    
+    #Widgets prix
+    scale.place(x=10,y=420)
+    b4.place(x=10,y=490)
+    
+    scale2.place(x=10,y=540)
+    b5.place(x=10,y=610)
+
+    #Autres widgets
+    lab15.place(x=870,y=340)
+    lab16.place(x=870,y=440)
+    lab17.place(x=870,y=540)
+    lab20.place(x=0,y=0)
+
+    b1.place(x=870, y=370,height = 44, width = 200)
+    b2.place(x=870, y=570,height = 44, width = 200)
+
+    
+    app.mainloop()
+
+
+# In[4]:
+
+
+#Fenêtre du programme de la page d'accueil
+
+acc=tk.Tk()
+acc.geometry("1500x1500")
+acc.minsize(760,1080)
+acc.title("En route pour Seattle")
+
+#Création de l'image Airbnb
+w=2000
+h=2000
+i=tk.PhotoImage(file='Airbnb_accueil.gif',master=acc)## Chemin relatif/ absolue de l'image en format Gif à mettre
+canvas=tk.Canvas(acc,width=w,height=h, bd=0, highlightthickness=0)
+canvas.create_image(700,350,image=i)
+canvas.place(x=-5,y=0)
+
+   
+btn = tk.Button(acc, text = "Réserver vos vacances", bg='salmon',
+                fg="white", activebackground="darkred", command = create,
+                font = 'Helvetica 12 bold')#le bouton pour rediriger vers l'autre fenêtre
+btn.place(x=500, y=500, height = 80, width = 400)
+
+acc.mainloop()
