@@ -1,0 +1,169 @@
+import tkinter as tk
+from tkcalendar import Calendar
+import pandas as pd
+from pandastable import Table, TableModel
+from datetime import datetime
+import matplotlib.pyplot as plt
+import os
+import seaborn as sns
+
+#préparation du jeu de données
+
+def import_description(name_df_csv): #nom du dataframe souhaité (sous-entendu un 'string')
+    
+    df = pd.read_csv('../dataframes/' + name_df_csv, sep=",")
+    
+    file_size = "Taille du fichier :", round(os.path.getsize('../dataframes/' + name_df_csv)/1000), 'Ko' #taille des fichiers
+    
+    lignes, colonnes = df.shape #il est possible de faire une affectation simultanée
+    nrow = "Nombre d'observations :", lignes
+    ncol = "Nombre de variables :", colonnes
+    
+    five_first = df.head(5)
+    five_last = df.tail(5)
+    
+    types = df.dtypes
+    
+    descriptions = df.describe
+    
+    return df, file_size, nrow, ncol, five_first, five_last, types#, descriptions #par souci de lisibilité
+
+
+# In[2]:
+
+
+def prix(mi,ma,df_prix):
+    
+    df_prix=df_prix.loc[df_prix["price"]!='']
+    df_prix['price'] = df_prix['price'].str.replace('$', '', regex=False)
+    df_prix['price'] = df_prix['price'].str.replace(',', '', regex=False)
+    df_prix['price']= df_prix['price'].astype(float)
+    df_prix=df_prix.loc[df_prix["price"]>=mi]
+    df_prix=df_prix.loc[df_prix["price"]<=ma]
+    df_prix=df_prix.sort_values(by='price')
+    
+    return df_prix
+
+
+def choixlocation(t,df):
+    global listings_log
+    
+    if t==1: t='Entire home/apt'
+    elif t==2: t='Private room'
+    else: t='Shared room'
+        
+    listings_log=df.loc[df["room_type"]==t]
+    
+    return listings_log
+
+
+def choixquartier(t,df):
+    global listings_quar
+    
+    df["neighbourhood"]= df["neighbourhood"].apply(lambda ligne: ligne.lower())
+    quartier=df.loc[df["neighbourhood"]!='']
+
+    t=t.lower()
+    if t in df["neighbourhood"].unique():
+        listings_quar=quartier.loc[quartier["neighbourhood"]==t]
+    elif t=='tous':
+        listings_quar=df
+            
+    return listings_quar
+
+
+def install(t,df):
+    """
+    Fonction qui exclue les annonces ne contenant pas l'installation désirée.
+    Je veux que la fonction applique le filtre uniquement si la case est cochée en oui, sinon je ne peux pas appliquer 
+    le filtre avec la valeur "0"
+    """
+    global listings_install
+    
+    df["amenities"] = df["amenities"].str.replace(' TV', 'tnv')
+    df["amenities"]= df["amenities"].apply(lambda ligne: ligne.lower())
+    
+    if t != "0":
+        listings_install=df.loc[df["amenities"].str.contains(t)==True]
+    else :
+        listings_install=df
+    
+    return listings_install
+
+
+def nombredenuit(t1,t2):
+    t1=t1.split('/')
+    y1=int(t1[2])
+    m1=int(t1[0])
+    d1=int(t1[1])
+    
+    deb=datetime(2000+y1,m1,d1)
+    t2=t2.split('/')
+    y2=int(t2[2])
+    m2=int(t2[0])
+    d2=int(t2[1])
+    fin=datetime(2000+y2,m2,d2)
+    
+    return (fin-deb).days,deb,fin
+
+
+def isavail(t1,t2,df,dfc):
+    global affichage
+
+    dfc['available'] = dfc['available'].map({'t' : 1, 'f' : 0})
+    dfc["date"]= pd.to_datetime(dfc["date"], format="%Y-%m-%d")
+    n,deb,fin=nombredenuit(t1,t2)
+    
+    dfc=dfc.loc[dfc["date"] >= deb]
+    dfc=dfc.loc[dfc["date"] < fin] #on ne dort pas dans le bien le jour du départ
+    dfc=dfc.loc[dfc["available"] == 1]
+
+    a=dfc.groupby(["listing_id"]).agg({"available":"count"})
+    a=a.loc[a["available"]==n]
+    
+    liste=pd.merge(a, dfc, how='inner', on='listing_id')
+    liste=liste["listing_id"].unique()
+    liste=pd.Series(liste,name="id")
+
+    affichage=pd.merge(liste, df, how='inner', on="id")
+    
+    return affichage
+
+
+def choixmieuxnotés(t,df):
+    global listings_notes
+    
+    note=df.loc[df["review_scores_rating"]!='']
+
+    if t.lower()=='oui': 
+        t=90
+        listings_notes=note.loc[note["review_scores_rating"]>=t]    
+    else:
+        listings_notes=df
+        
+    return listings_notes
+
+
+def choixnblits(t,df):
+    global listings_beds
+    
+    bed=df.loc[df["beds"]!='']
+    bed["beds"]= bed["beds"].astype(int)
+            
+    listings_beds=bed.loc[bed["beds"]>=t] #nombre de lits renseigné ou plus
+    
+    return listings_beds
+
+
+def choixannulation(t,df):
+    global listings_annul
+
+    annul=df.loc[df["cancellation_policy"]!='']    
+
+    if t.lower()=='oui': 
+        t='flexible'
+        listings_annul=annul.loc[annul["cancellation_policy"]==t]
+    else:
+        listings_annul=df
+        
+    return listings_annul
